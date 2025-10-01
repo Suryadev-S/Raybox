@@ -1,13 +1,13 @@
 import { FileModel, ThumbnailModel } from "@/lib/models";
 import { FileType, FileTypeEnum, Thumbnail } from "@/lib/types";
-import { connectMongo, mapMimeToFileType } from "@/lib/utils";
 import { createHash } from "crypto";
-import { Types } from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
-import fs from 'fs/promises'
+import fs from 'fs/promises';
+import { Types } from "mongoose";
+import { mapMimeToFileType } from "@/lib/utils";
 
 function gethashedPartitions(fileHash: string): string {
     const lvl1: string = fileHash.slice(0, 2); //first two chars of hash
@@ -29,7 +29,6 @@ async function imageThumbnailGenerator(fileHash: string, fileBuffer: Buffer): Pr
     const hashPartitions: string = gethashedPartitions(fileHash); // hash of the original file
     const thumbPathRelative: string = path.join('media', 'thumbs', hashPartitions, thumbName)
     const thumbPathAbsolute: string = path.join(process.env.STORAGE_PREFIX as string, thumbPathRelative);
-    await fs.mkdir(path.dirname(thumbPathAbsolute), { recursive: true }); //checks the existence and creates the directory.
 
     const meta = await sharp(fileBuffer).resize(300, 300, { fit: 'inside' }).toFile(thumbPathAbsolute);
 
@@ -56,27 +55,19 @@ const ThumbnailGeneratorLookup: Record<string, (fh: string, fb: Buffer) => Promi
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
     try {
-        await connectMongo();
         // file(s) reception
         const formData = await req.formData();
         const file: File = formData.get("files") as File;
-        console.log(file);
 
         const arrayBuffer: ArrayBuffer = await file.arrayBuffer();
         const buffer: Buffer = Buffer.from(arrayBuffer);
-
-        console.log('made buffer');
 
         // identify the file type
         const fileType: FileTypeEnum = mapMimeToFileType(file.type);
         const fileHash: string = getFileHash(buffer);
 
-        console.log('file type identified', fileType);
-
         // generate the thumbnail as per file type
         const thumbId: Types.ObjectId = await ThumbnailGeneratorLookup[fileType](fileHash, buffer);
-
-        console.log('thumb creation done');
 
         // give a unique name for the file and placing in the storage
         const uuid: string = uuidv4();
@@ -88,8 +79,6 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
         await fs.mkdir(path.dirname(filePathAbsolute), { recursive: true }); //checks the existence and creates the directory.
         await fs.writeFile(filePathAbsolute, buffer);
-
-        console.log('naming and placing file done');
 
         // making database entry
         const ownerId: Types.ObjectId = new Types.ObjectId();
@@ -107,7 +96,6 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
         const newFile = await FileModel.create(fileDoc);
 
-        console.log('registering in the db done');
 
         return NextResponse.json(newFile, { status: 200 });
     } catch (error) {

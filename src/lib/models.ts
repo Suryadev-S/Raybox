@@ -1,5 +1,5 @@
 import { model, models, Schema } from "mongoose";
-import { Collection, CollectionFiles, FileType, TagMaps, Tags, Thumbnail, User } from "./types";
+import { Collection, CollectionFilesJoin, FileType, Tags, TagsLookup, Thumbnail, User } from "./types";
 
 const FileSchema = new Schema<FileType>({
     originalName: { type: String, required: true },
@@ -18,6 +18,7 @@ const FileSchema = new Schema<FileType>({
 },
     { timestamps: true }
 );
+// url: to be added in the response json and not included in the the schema.
 
 const UserSchema = new Schema<User>(
     {
@@ -68,6 +69,7 @@ const ThumbnailSchema = new Schema<Thumbnail>(
         timestamps: true, // adds createdAt and updatedAt
     }
 );
+// url: to be added in the response json and not included in the the schema.
 
 const CollectionSchema = new Schema<Collection>(
     {
@@ -97,7 +99,7 @@ const CollectionSchema = new Schema<Collection>(
     }
 );
 
-const CollectionFilesSchema = new Schema<CollectionFiles>(
+const CollectionFilesSchema = new Schema<CollectionFilesJoin>(
     {
         collectionId: {
             type: Schema.Types.ObjectId,
@@ -130,7 +132,7 @@ const TagsSchema = new Schema<Tags>(
     }
 );
 
-const TagMapsSchema = new Schema<TagMaps>(
+const TagsLookupSchema = new Schema<TagsLookup>(
     {
         tagId: {
             type: Schema.Types.ObjectId,
@@ -148,12 +150,18 @@ const TagMapsSchema = new Schema<TagMaps>(
 );
 
 export const FileModel = models.Files || model<FileType>('Files', FileSchema);
+
 export const UserModel = models.Users || model<User>('Users', UserSchema);
+
 export const ThumbnailModel = models.Thumbnails || model<Thumbnail>("Thumbnails", ThumbnailSchema);
-export const CollectionModel = models.Collecitons || model<Collection>("Collection", CollectionSchema);
-export const CollectionFilesModel = models.CollectionFiles || model<CollectionFiles>(
-    "CollectionFiles",
+
+export const CollectionModel = models.Collections || model<Collection>("Collections", CollectionSchema);
+
+export const CollectionFilesModel = models.CollectionFilesJoins || model<CollectionFilesJoin>(
+    "CollectionFilesJoins",
     CollectionFilesSchema
 );
+
 export const TagsModel = models.Tags || model<Tags>("Tags", TagsSchema);
-export const TagMapsModel = models.TagMaps || model<TagMaps>("TagMaps", TagMapsSchema);
+
+export const TagsLookupModel = models.TagsLookup || model<TagsLookup>("TagsLookup", TagsLookupSchema);

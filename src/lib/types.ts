@@ -1,4 +1,4 @@
-import { Schema } from "mongoose"
+import { Types } from "mongoose";
 
 export type FileTypeEnum = 'image' | 'video' | 'document' | 'audio' | 'others'
 export type UserRoleEnum = 'admin' | 'user';
@@ -11,10 +11,11 @@ export interface FileType {
     storagePath: string,
     type: FileTypeEnum,
     mimeType: string,
-    thumbnailId: Schema.Types.ObjectId,
-    owner: Schema.Types.ObjectId,
+    thumbnailId: Types.ObjectId,
+    owner: Types.ObjectId,
     hash: string,
 }
+
 
 export interface User {
     displayName: string,
@@ -22,7 +23,7 @@ export interface User {
     passwordHash: string,
     email: string,
     role: UserRoleEnum,
-    profileThumbnailId: Schema.Types.ObjectId | null,
+    profileThumbnailId: Types.ObjectId | null,
     storageQuota: number,
     storageUsed: number,
     status: UserStatusEnum
@@ -41,20 +42,20 @@ export interface Thumbnail {
 export interface Collection {
     name: string,
     description: string,
-    owner: Schema.Types.ObjectId,
-    coverThumbnailId: Schema.Types.ObjectId,
+    owner: Types.ObjectId,
+    coverThumbnailId: Types.ObjectId,
 }
 
-export interface CollectionFiles {
-    collectionId: Schema.Types.ObjectId,
-    itemId: Schema.Types.ObjectId
+export interface CollectionFilesJoin {
+    collectionId: Types.ObjectId,
+    itemId: Types.ObjectId
 }
 
 export interface Tags {
     name: string
 }
 
-export interface TagMaps {
-    tagId: Schema.Types.ObjectId,
-    itemId: Schema.Types.ObjectId
+export interface TagsLookup {
+    tagId: Types.ObjectId,
+    itemId: Types.ObjectId
 }
