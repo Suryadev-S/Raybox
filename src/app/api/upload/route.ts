@@ -1,6 +1,6 @@
 import { FileModel, ThumbnailModel } from "@/lib/models";
-import { FileType, FileTypeEnum, Thumbnail } from "@/lib/types";
-import { connectMongo, mapMimeToFileType } from "@/lib/utils";
+import { EventEnum, FileType, FileTypeEnum, Thumbnail } from "@/lib/types";
+import { connectMongo, emitter, mapMimeToFileType } from "@/lib/utils";
 import { createHash } from "crypto";
 import { Types } from "mongoose";
 import { NextRequest, NextResponse } from "next/server";
@@ -60,23 +60,23 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         // file(s) reception
         const formData = await req.formData();
         const file: File = formData.get("files") as File;
-        console.log(file);
 
         const arrayBuffer: ArrayBuffer = await file.arrayBuffer();
         const buffer: Buffer = Buffer.from(arrayBuffer);
 
-        console.log('made buffer');
+
 
         // identify the file type
         const fileType: FileTypeEnum = mapMimeToFileType(file.type);
         const fileHash: string = getFileHash(buffer);
 
-        console.log('file type identified', fileType);
+        emitter.emit('process_update', { msg: `file type: ${fileType}`, progress: 20 });
+
 
         // generate the thumbnail as per file type
         const thumbId: Types.ObjectId = await ThumbnailGeneratorLookup[fileType](fileHash, buffer);
 
-        console.log('thumb creation done');
+        emitter.emit('process_update', { msg: 'thumbnail generated', progress: 40 });
 
         // give a unique name for the file and placing in the storage
         const uuid: string = uuidv4();
@@ -89,7 +89,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         await fs.mkdir(path.dirname(filePathAbsolute), { recursive: true }); //checks the existence and creates the directory.
         await fs.writeFile(filePathAbsolute, buffer);
 
-        console.log('naming and placing file done');
+        emitter.emit('process_update', { msg: 'file naming and storing complete', progress: 80 });
+
 
         // making database entry
         const ownerId: Types.ObjectId = new Types.ObjectId();
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
         const newFile = await FileModel.create(fileDoc);
 
-        console.log('registering in the db done');
+        emitter.emit('process_update', { msg: 'Db registration complete', progress: 100 });
 
         return NextResponse.json(newFile, { status: 200 });
     } catch (error) {

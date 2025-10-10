@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import mongoose from "mongoose";
 import { FileTypeEnum } from "./types";
+import EventEmitter from "events";
 
 const { MONGODB_URI } = process.env;
 
@@ -51,3 +52,5 @@ export function mapMimeToFileType(mime: string): FileTypeEnum {
   // everything else → others
   return 'others';
 }
+
+export const emitter = new EventEmitter()

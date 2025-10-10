@@ -2,14 +2,96 @@
 
 import { cn } from "@/lib/utils";
 import { Upload } from "lucide-react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Button } from "./ui/button";
 
 interface FileUploaderProps {
     name: string;
     required?: boolean;
     value?: File[]; // controlled form value
     onChange?: (files: File[]) => void; // updater from parent
+}
+
+interface FilePreviewProps {
+    files: File[];
+}
+
+const FilePreview = ({ files }: FilePreviewProps) => {
+
+    // generate URLs
+    const previewObjectUrls = files.map((f) => URL.createObjectURL(f));
+
+    // cleanup URLs on unmount or when files change
+    useEffect(() => {
+        return () => {
+            previewObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+        };
+    }, [files]);
+
+    const visiblePreviews = previewObjectUrls.slice(0, 4);
+    const extraCount = previewObjectUrls.length - 4;
+    return (
+        <section>
+            <h6 className="font-bold flex gap-1">
+                <span>Files</span>
+                <span>{files.length}</span>
+            </h6>
+            <ul className="grid grid-cols-[repeat(auto-fill,_minmax(80px,_1fr))] gap-1.5 place-items-center">
+                {/* preview item */}
+                {visiblePreviews.map((preview, idx) => (
+                    <li key={idx}>
+                        <div className="w-20 h-20 rounded-md overflow-hidden shadow-md">
+                            <img
+                                src={preview}
+                                alt={`Preview ${idx}`}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                    </li>
+                ))}
+                {/* +N more tile */}
+                {extraCount > 0 && (
+                    <li>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button>
+                                    +{extraCount}
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>All Files ({files.length})</DialogTitle>
+                                    <DialogDescription>
+                                        Make changes to your profile here. Click save when you&apos;re
+                                        done.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <section className="h-100 overflow-auto">
+                                    <div className="grid grid-cols-[repeat(auto-fill,_minmax(120px,_1fr))] gap-2 mt-4 place-items-center">
+                                        {previewObjectUrls.map((preview, idx) => (
+                                            <div
+                                                key={idx}
+                                                className="w-30 aspect-square rounded-md overflow-hidden shadow-md"
+                                            >
+                                                <img
+                                                    src={preview}
+                                                    alt={`Preview ${idx}`}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            </DialogContent>
+                        </Dialog>
+                    </li>
+                )}
+            </ul>
+
+        </section>
+    )
 }
 
 export const FileUploader = ({ name, required, value, onChange }: FileUploaderProps) => {
@@ -31,7 +113,6 @@ export const FileUploader = ({ name, required, value, onChange }: FileUploaderPr
         },
     });
 
-    // const filesToRender = value ?? [];
 
     return (
         <section className="container">
@@ -65,16 +146,8 @@ export const FileUploader = ({ name, required, value, onChange }: FileUploaderPr
                 )}
             </div>
 
-            <aside className="mt-4">
-                <h4 className="font-medium">Files</h4>
-                <ul className="text-sm list-disc pl-4">
-                    {acceptedFiles.map((file) => (
-                        <li key={file.name}>
-                            {file.name} - {(file.size / 1024).toFixed(2)} KB
-                        </li>
-                    ))}
-                </ul>
-            </aside>
+            {/* To show the selected files */}
+            <FilePreview files={value as File[]} />
         </section>
     );
 };

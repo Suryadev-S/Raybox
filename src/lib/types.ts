@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 export type FileTypeEnum = 'image' | 'video' | 'document' | 'audio' | 'others'
 export type UserRoleEnum = 'admin' | 'user';
 export type UserStatusEnum = 'active' | 'inactive'
+export type EventEnum = 'process_update' | 'process_finish'
 
 export interface FileType {
     originalName: string,
