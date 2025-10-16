@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "../globals.css";
 import { NavigationMenu, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 import Link from "next/link";
+import { Toaster } from "@/components/ui/sonner";
+import SignOut from "@/components/SignOut";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,9 +43,23 @@ export default function RootLayout({
                 <Link href="/uploads">uploads</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                <Link href="/auth/register">Register</Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                <Link href="/auth/login">login</Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem asChild>
+              <SignOut />
+            </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
         {children}
+        <Toaster />
       </body>
     </html>
   );

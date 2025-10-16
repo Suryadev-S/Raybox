@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import mongoose from "mongoose";
-import { FileTypeEnum } from "./types";
+import { FileTypeEnum, PaginateOptions } from "./types";
 import EventEmitter from "events";
 
 const { MONGODB_URI } = process.env;
@@ -53,4 +53,37 @@ export function mapMimeToFileType(mime: string): FileTypeEnum {
   return 'others';
 }
 
-export const emitter = new EventEmitter()
+export const emitter = new EventEmitter();
+
+export async function paginateModel({
+  model,
+  query = {},
+  select = '',
+  page = 1,
+  limit = 10,
+  sort = { createdAt: -1 },
+  populate,
+}: PaginateOptions) {
+  const skip = (page - 1) * limit;
+
+  let queryBuilder = model.find(query).skip(skip).limit(limit).select(select).sort(sort);
+
+  if (populate) {
+    queryBuilder = queryBuilder.populate(populate);
+  }
+
+  const [total, results] = await Promise.all([
+    model.countDocuments(query),
+    queryBuilder.lean(),
+  ]);
+
+  return {
+    data: results,
+    meta: {
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+      totalItems: total,
+      itemsPerPage: limit,
+    },
+  };
+}

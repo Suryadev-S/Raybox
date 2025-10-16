@@ -1,4 +1,4 @@
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 export type FileTypeEnum = 'image' | 'video' | 'document' | 'audio' | 'others'
 export type UserRoleEnum = 'admin' | 'user';
@@ -44,6 +44,7 @@ export interface Collection {
     name: string,
     description: string,
     owner: Types.ObjectId,
+    parent: Types.ObjectId,
     coverThumbnailId: Types.ObjectId,
 }
 
@@ -59,4 +60,14 @@ export interface Tags {
 export interface TagsLookup {
     tagId: Types.ObjectId,
     itemId: Types.ObjectId
+}
+
+export interface PaginateOptions {
+    model: mongoose.Model<any>;
+    query?: Record<string, any>;
+    select?: string;
+    page?: number;
+    limit?: number;
+    sort?: any;
+    populate?: mongoose.PopulateOptions | mongoose.PopulateOptions[];
 }

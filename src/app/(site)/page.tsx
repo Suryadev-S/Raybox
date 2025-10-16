@@ -1,8 +1,15 @@
+import { auth } from "@/auth";
 import Image from "next/image";
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth()
+
+  if (!session?.user) return null
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
+      <h1>session is: {session.user.id}</h1>
+      <p>name is: {session.user.name}</p>
+      <p>email is : {session.user.email}</p>
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <Image
           className="dark:invert"

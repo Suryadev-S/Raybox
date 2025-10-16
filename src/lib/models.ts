@@ -88,6 +88,11 @@ const CollectionSchema = new Schema<Collection>(
             ref: "User",     // references the User collection
             required: true,
         },
+        parent: {
+            type: Schema.Types.ObjectId,
+            ref: "Collection",
+            default: null, // only __root__ will have null parent
+        },
         coverThumbnailId: {
             type: Schema.Types.ObjectId,
             ref: "Thumbnail", // references the Thumbnail collection

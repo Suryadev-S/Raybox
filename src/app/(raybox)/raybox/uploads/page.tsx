@@ -72,7 +72,7 @@ const UploadsPage = ({ params }: { params: { slug: string } }) => {
         setLoading(true);
 
         try {
-            const res = await axios.post('/api/test', formData, {
+            const res = await axios.post('/api/upload', formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
@@ -106,7 +106,7 @@ const UploadsPage = ({ params }: { params: { slug: string } }) => {
                 <FileUploader name="files" required value={fileList} onChange={setFileList} />
             </section>
             <section>
-                {/* <ServerEventLogger /> */}
+                <ServerEventLogger />
             </section>
             <section>
                 {uploadProgress > 0 && (
