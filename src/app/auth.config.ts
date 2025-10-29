@@ -8,6 +8,7 @@ export const authConfig = {
     pages: {
         signIn: '/auth/login'
     },
+    secret: process.env.AUTH_SECRET,
     providers: [],
     callbacks: {},
 } satisfies NextAuthConfig

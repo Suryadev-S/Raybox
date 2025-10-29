@@ -1,9 +1,21 @@
 import NextAuth from "next-auth"
 import { authConfig } from "./app/auth.config";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const { auth } = NextAuth(authConfig);
 
-export async function middleware(req: NextRequest) {
-    const session = await auth();
-}
+export default auth(async (req) => {
+    const { pathname } = req.nextUrl;
+
+    if (!!req.auth) {
+        return NextResponse.next();
+    }
+
+    return NextResponse.redirect(new URL(req.nextUrl.origin));
+});
+
+export const config = {
+    matcher: [
+        "/api/raybox/:path*"
+    ],
+};
