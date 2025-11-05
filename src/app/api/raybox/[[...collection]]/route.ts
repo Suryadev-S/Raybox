@@ -42,7 +42,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ coll
 
         const searchParams: URLSearchParams = req.nextUrl.searchParams;
         const page: number = parseInt(searchParams.get('page') || "1", 10);
-        const limit: number = parseInt(searchParams.get('limit') || "10", 10);
+        const limit: number = parseInt(searchParams.get('limit') || "25", 10);
         const skip: number = (page - 1) * limit;
 
         const results = await CollectionModel.aggregate([
