@@ -147,7 +147,7 @@ export const FileUploader = ({ name, required, value, onChange }: FileUploaderPr
             </div>
 
             {/* To show the selected files */}
-            <FilePreview files={value as File[]} />
+            {/* <FilePreview files={value as File[]} /> */}
         </section>
     );
 };
