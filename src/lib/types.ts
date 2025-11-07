@@ -71,3 +71,13 @@ export interface PaginateOptions {
     sort?: any;
     populate?: mongoose.PopulateOptions | mongoose.PopulateOptions[];
 }
+
+// Type definition for tracking individual file upload status
+export type FileUploadStatus = {
+    id: string // unique identifier for this upload
+    file: File
+    status: "pending" | "uploading" | "success" | "error"
+    progress: number // 0-100
+    error?: string
+    abortController?: AbortController
+}

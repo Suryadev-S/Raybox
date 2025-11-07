@@ -6,12 +6,22 @@ import { useEffect, useState } from "react";
 import axios from 'axios';
 import { Progress } from "@/components/ui/progress";
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
-import { CopyIcon, EyeIcon, FileIcon, ImageIcon } from "lucide-react";
+import { CopyIcon, EyeIcon, File, FileIcon, ImageIcon } from "lucide-react";
+import { FileUploadStatus } from "@/lib/types";
+import FileUploadList from "@/components/FileUploadList";
+import { title } from "process";
 
 type ServerSentData = {
     msg: string;
     progress: number;
 };
+
+type UploadStats = {
+    total: number,
+    completed: number,
+    failed: number,
+    uploading: number
+}
 
 interface FilePreviewProps {
     files: File[];
@@ -138,11 +148,74 @@ const FilePreview = ({ files }: FilePreviewProps) => {
     );
 };
 
+const UploadStats = ({ uploadStats }: { uploadStats: UploadStats }) => {
+    return (
+        <div className="mb-8 grid grid-cols-4 gap-4">
+            <div className="bg-card p-4 rounded-lg border border-border">
+                <p className="text-sm text-muted-foreground mb-1">Total</p>
+                <p className="text-2xl font-bold text-foreground">{uploadStats.total}</p>
+            </div>
+            <div className="bg-card p-4 rounded-lg border border-border">
+                <p className="text-sm text-muted-foreground mb-1">Completed</p>
+                <p className="text-2xl font-bold text-green-600">{uploadStats.completed}</p>
+            </div>
+            <div className="bg-card p-4 rounded-lg border border-border">
+                <p className="text-sm text-muted-foreground mb-1">Uploading</p>
+                <p className="text-2xl font-bold text-blue-600">{uploadStats.uploading}</p>
+            </div>
+            <div className="bg-card p-4 rounded-lg border border-border">
+                <p className="text-sm text-muted-foreground mb-1">Failed</p>
+                <p className="text-2xl font-bold text-red-600">{uploadStats.failed}</p>
+            </div>
+        </div>
+    )
+}
+
 
 const UploadsPage = ({ params }: { params: { slug: string } }) => {
     const [fileList, setFileList] = useState<File[]>([]);
+    // State to track all file uploads
+    const [fileUploads, setFileUploads] = useState<FileUploadStatus[]>([])
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false); //not handled as of now in bento grid and each file http request.
+
+    // Calculate statistics
+    const uploadStats = {
+        total: fileUploads.length,
+        completed: fileUploads.filter((u) => u.status === "success").length,
+        failed: fileUploads.filter((u) => u.status === "error").length,
+        uploading: fileUploads.filter((u) => u.status === "uploading").length,
+    }
+
+    // a function to sync the fileList and fileUploads
+    const handleSelectionHelper = (files: File[]) => {
+        setFileList((prev) => [...prev, ...files]);
+        handleFilesSelected(files);
+    }
+
+    // Cancel a specific upload in progress
+    const handleCancelUpload = (uploadId: string) => {
+        setFileUploads((prev) =>
+            prev.map((u) => {
+                if (u.id === uploadId && u.abortController) {
+                    // Abort the fetch request
+                    u.abortController.abort()
+                    // Keep it in uploading state momentarily before resetting
+                    return { ...u }
+                }
+                return u
+            }),
+        )
+    }
+
+    // Retry a failed upload
+    const handleRetryUpload = (uploadId: string) => {
+        const uploadToRetry = fileUploads.find((u) => u.id === uploadId)
+        if (uploadToRetry) {
+            uploadFile(uploadToRetry)
+        }
+    }
+
     const items = [
         {
             title: `Files (${fileList.length}/3)`,
@@ -150,25 +223,83 @@ const UploadsPage = ({ params }: { params: { slug: string } }) => {
             className: "md:col-span-2",
         },
         {
-            header: <FileUploader name="files" required value={fileList} onChange={setFileList} />,
+            title: "Upload",
+            description: 'upload',
+            header: <FileUploader name="files" required value={fileList} onChange={handleSelectionHelper} />,
             className: "md:col-span-1",
-        },
-        {
-            title: "The Art of Design",
-            description: "Discover the beauty of thoughtful and functional design.",
-            header: <Skeleton />,
-            className: "md:col-span-1",
-            icon: <CopyIcon className="h-4 w-4 text-neutral-500" />,
-        },
-        {
-            title: "The Power of Communication",
-            description:
-                "Understand the impact of effective communication in our lives.",
-            header: <Skeleton />,
-            className: "md:col-span-2",
-            icon: <CopyIcon className="h-4 w-4 text-neutral-500" />,
+            icon: <File className="h-4 w-4 text-neutral-500" />
         },
     ];
+
+    // Handle new files selected for upload
+    const handleFilesSelected = (files: File[]) => {
+        // Create upload status objects for each file
+        const newUploads: FileUploadStatus[] = files.map((file) => ({
+            id: `${file.name}-${Date.now()}-${Math.random()}`, // unique ID
+            file,
+            status: "pending",
+            progress: 0,
+        }))
+
+        setFileUploads((prev) => [...prev, ...newUploads])
+    }
+
+    // Start uploading all pending files
+    const handleUploadAll = async () => {
+        const pendingUploads = fileUploads.filter((u) => u.status === "pending")
+
+        // Upload each file independently
+        for (const upload of pendingUploads) {
+            uploadFile(upload)
+        }
+    }
+    const uploadFile = async (upload: FileUploadStatus) => {
+        // Create an AbortController for this specific upload (allows cancellation)
+        const abortController = new AbortController();
+
+        // Update state to mark this file as uploading
+        setFileUploads((prev) => prev.map((u) => (u.id === upload.id ? { ...u, status: "uploading", abortController } : u)));
+
+        try {
+            // file upload using FormData
+            const formData = new FormData();
+            formData.append("files", upload.file);
+
+            // axios call
+            const res = await axios.post('/api/upload', formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+                onUploadProgress: (progressEvent) => {
+                    const percentCompleted = progressEvent.total ? Math.round((progressEvent.loaded * 100) / progressEvent.total) : 0;
+                    setUploadProgress(percentCompleted);
+                },
+                signal: abortController.signal
+            });
+
+            // handle error
+            if (res.status != 200) {
+                throw new Error("Upload failed");
+            }
+
+            // Mark upload as successful
+            setFileUploads((prev) => prev.map((u) => (u.id === upload.id ? { ...u, status: "success", progress: 100 } : u)));
+
+        } catch (err) {
+            // Handle cancellation vs other errors
+            if (err instanceof Error && err.name === "AbortError") {
+                setFileUploads((prev) =>
+                    prev.map((u) => (u.id === upload.id ? { ...u, status: "pending", progress: 0, error: undefined } : u)),
+                )
+            } else {
+                const errorMessage = err instanceof Error ? err.message : "Unknown error"
+                setFileUploads((prev) =>
+                    prev.map((u) => (u.id === upload.id ? { ...u, status: "error", error: errorMessage } : u)),
+                )
+            }
+        }
+    }
+
     const handleSubmit = async () => {
         if (fileList.length === 0) return;
         const formData = new FormData();
@@ -204,10 +335,10 @@ const UploadsPage = ({ params }: { params: { slug: string } }) => {
         <>
             <h1 className="text-4xl">Uploads page</h1>
             <Button
-                onClick={handleSubmit}
-                disabled={fileList.length === 0 || loading}
+                onClick={handleUploadAll}
+                disabled={fileList.length === 0 || uploadStats.uploading > 0}
             >
-                {loading ? "Uploading..." : "Submit"}
+                {uploadStats.uploading > 0 ? "Uploading..." : "Submit"}
             </Button>
             {/* <section>
                 <FileUploader name="files" required value={fileList} onChange={setFileList} />
@@ -234,8 +365,12 @@ const UploadsPage = ({ params }: { params: { slug: string } }) => {
                     />
                 ))}
             </BentoGrid>
+            {/* Upload Statistics */}
             <section>
-                <ServerEventLogger />
+                <UploadStats uploadStats={uploadStats} />
+            </section>
+            <section>
+                <FileUploadList uploads={fileUploads} onCancel={handleCancelUpload} onRetry={handleRetryUpload} />
             </section>
         </>
     );

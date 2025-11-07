@@ -27,10 +27,19 @@ export default async function Home() {
             </div>
           </section>
           <section>
-            <img
+            <video
+              className="w-full h-full object-cover"
+              autoPlay
+              loop
+              muted
+              playsInline
+            >
+              <source src="/unicorn.mp4" type="video/mp4" />
+            </video>
+            {/* <img
               src={'/vortex_cube2.png'}
               className="w-full h-full object-contain"
-            />
+            /> */}
           </section>
         </div>
       </div>
