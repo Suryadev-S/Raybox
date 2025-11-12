@@ -12,10 +12,6 @@ A **Media Asset Management (MAM)** application designed for individuals and orga
 - [Current Progress](#current-progress)
 - [Future Plans](#future-plans)
 - [Limitations](#limitations)
-- [Setup Instructions](#setup-instructions)
-- [Usage](#usage)
-- [License](#license)
-- [Acknowledgements](#acknowledgements)
 
 ---
 
