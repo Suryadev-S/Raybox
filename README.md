@@ -1,8 +1,9 @@
-# 🌞 Raybox
+# Raybox
+<img width="1920" height="971" alt="Screenshot 2025-11-12 132729" src="https://github.com/user-attachments/assets/e361ff0b-8660-450d-b381-7c8d26259e5e" />
 
 A **Media Asset Management (MAM)** application designed for individuals and organizations who want to manage, search, and organize media files **locally**, without relying on third-party cloud storage solutions.
 
----
+
 
 ## 🧭 Table of Contents
 - [About the Project](#about-the-project)
